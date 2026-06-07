@@ -2,35 +2,40 @@ import discord
 from discord.ext import commands
 from flask import Flask, render_template, request, redirect, session
 import requests
-import sqlite3
 import threading
 import os
 import urllib.parse
+import psycopg2 # مكتبة قاعدة البيانات السحابية
 
 # ==========================================
-# 1. إعدادات البوت والموقع (النظام السحابي)
+# 1. إعدادات السحابة
 # ==========================================
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
-# سيقوم الخادم بوضع رابطه الحقيقي هنا، وإذا كنت في جهازك سيعمل على 127.0.0.1
 DOMAIN = os.environ.get("DOMAIN", "http://127.0.0.1:5000")
+DATABASE_URL = os.environ.get("DATABASE_URL") # رابط القاعدة الجديد
 
 REDIRECT_URI = f"{DOMAIN}/callback"
 encoded_redirect = urllib.parse.quote(REDIRECT_URI, safe='')
 OAUTH_URL = f"https://discord.com/api/oauth2/authorize?client_id={CLIENT_ID}&redirect_uri={encoded_redirect}&response_type=code&scope=identify%20guilds"
 
 # ==========================================
-# 2. إعداد قاعدة البيانات المركزية
+# 2. إعداد قاعدة البيانات السحابية (PostgreSQL)
 # ==========================================
-def init_db():
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS settings (guild_id TEXT PRIMARY KEY, welcome_msg TEXT)')
-    conn.commit()
-    conn.close()
+def get_db_connection():
+    return psycopg2.connect(DATABASE_URL)
 
-init_db()
+def init_db():
+    if not DATABASE_URL: return
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS settings (
+                 guild_id TEXT PRIMARY KEY, 
+                 welcome_msg TEXT)''')
+    conn.commit()
+    c.close()
+    conn.close()
 
 # ==========================================
 # 3. محرك الموقع (Flask Dashboard)
@@ -79,16 +84,22 @@ def dashboard():
     
     target_guild_id = str(admin_guilds[0]['id'])
     
-    conn = sqlite3.connect('database.db')
+    conn = get_db_connection()
     c = conn.cursor()
 
     if request.method == 'POST':
         new_msg = request.form.get('welcome_msg', 'حياك الله!')
-        c.execute('REPLACE INTO settings (guild_id, welcome_msg) VALUES (?, ?)', (target_guild_id, new_msg))
+        # طريقة التحديث والإدخال في PostgreSQL
+        c.execute('''INSERT INTO settings (guild_id, welcome_msg) 
+                     VALUES (%s, %s) 
+                     ON CONFLICT (guild_id) 
+                     DO UPDATE SET welcome_msg = EXCLUDED.welcome_msg''', 
+                  (target_guild_id, new_msg))
         conn.commit()
 
-    c.execute('SELECT welcome_msg FROM settings WHERE guild_id = ?', (target_guild_id,))
+    c.execute('SELECT welcome_msg FROM settings WHERE guild_id = %s', (target_guild_id,))
     row = c.fetchone()
+    c.close()
     conn.close()
     
     current_msg = row[0] if row else "أهلاً بك في السيرفر، نتمنى لك وقتاً ممتعاً!"
@@ -98,7 +109,6 @@ def run_flask():
     import logging
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
-    # المنفذ الديناميكي للخادم السحابي
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
@@ -113,6 +123,7 @@ bot = BlazeBot()
 
 @bot.event
 async def on_ready():
+    init_db() # إنشاء الجداول عند التشغيل
     print("-----------------------------------------")
     print(f"✅ البوت متصل كـ: {bot.user}")
     print(f"🌐 الموقع يعمل على: {DOMAIN}")
@@ -120,10 +131,11 @@ async def on_ready():
 
 @bot.event
 async def on_member_join(member):
-    conn = sqlite3.connect('database.db')
+    conn = get_db_connection()
     c = conn.cursor()
-    c.execute('SELECT welcome_msg FROM settings WHERE guild_id = ?', (str(member.guild.id),))
+    c.execute('SELECT welcome_msg FROM settings WHERE guild_id = %s', (str(member.guild.id),))
     row = c.fetchone()
+    c.close()
     conn.close()
     
     welcome_msg = row[0] if row else "أهلاً بك في السيرفر، نتمنى لك وقتاً ممتعاً!"
