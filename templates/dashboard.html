@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة تحكم السيرفر | Blaze</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0d0d0d; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card-bg { background-color: #1a1a1a; border: 1px solid #2a2a2a; transition: 0.3s; }
+        .accent-text { color: #ff5e00; }
+        .accent-bg { background-color: #ff5e00; }
+        input[type="text"] { background-color: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; padding: 8px; width: 100%; margin-top: 10px;}
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto bg-gradient-to-r from-[#1a1a1a] to-[#2a1100] rounded-2xl p-8 mb-8 flex justify-between items-center shadow-lg">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">إدارة سيرفرك مع <span class="accent-text">Blaze AI</span></h1>
+            <p class="text-gray-400">لوحة تحكم متصلة بالبوت مباشرة.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="/dashboard" class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card-bg rounded-xl p-6 flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-[#252525] rounded-full flex items-center justify-center mb-4 text-3xl">👋</div>
+            <h3 class="text-xl font-bold mb-2">الترحيب والتوديع</h3>
+            <p class="text-sm text-gray-400 mb-2">الرسالة الحالية:</p>
+            <input type="text" name="welcome_msg" value="{{ current_msg }}" required>
+            <button type="submit" class="mt-4 w-full accent-bg hover:bg-[#e05200] text-white py-2 rounded font-bold">
+                💾 حفظ رسالة الترحيب
+            </button>
+        </div>
+        
+        <div class="card-bg rounded-xl p-6 flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-[#252525] rounded-full flex items-center justify-center mb-4 text-3xl">🛡️</div>
+            <h3 class="text-xl font-bold mb-2">الحماية التلقائية</h3>
+            <p class="text-sm text-gray-400 mb-6 flex-grow">يعمل البوت كحارس شخصي لمنع الروابط.</p>
+            <div class="w-full bg-green-600/20 text-green-500 py-2 rounded flex items-center justify-center border border-green-600/50">
+                ✔️ الحماية مفعلة تلقائياً
+            </div>
+        </div>
+    </form>
+</body>
+</html>
