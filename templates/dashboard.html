@@ -9,7 +9,7 @@
         .card-bg { background-color: #1a1a1a; border: 1px solid #2a2a2a; transition: 0.3s; }
         .accent-text { color: #ff5e00; }
         .accent-bg { background-color: #ff5e00; }
-        input[type="text"] { background-color: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; padding: 8px; width: 100%; margin-top: 10px;}
+        input[type="text"] { background-color: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; padding: 8px; width: 100%; margin-top: 5px;}
     </style>
 </head>
 <body class="min-h-screen p-8">
@@ -20,16 +20,18 @@
         </div>
     </div>
 
-    <form method="POST" action="/dashboard" class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="card-bg rounded-xl p-6 flex flex-col items-center text-center">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <form method="POST" action="/dashboard" class="card-bg rounded-xl p-6 flex flex-col items-center text-center">
+            <input type="hidden" name="action" value="save_welcome">
             <div class="w-16 h-16 bg-[#252525] rounded-full flex items-center justify-center mb-4 text-3xl">👋</div>
             <h3 class="text-xl font-bold mb-2">الترحيب والتوديع</h3>
-            <p class="text-sm text-gray-400 mb-2">الرسالة الحالية:</p>
+            <p class="text-sm text-gray-400 mb-2 w-full text-right">الرسالة الحالية:</p>
             <input type="text" name="welcome_msg" value="{{ current_msg }}" required>
             <button type="submit" class="mt-4 w-full accent-bg hover:bg-[#e05200] text-white py-2 rounded font-bold">
                 💾 حفظ رسالة الترحيب
             </button>
-        </div>
+        </form>
         
         <div class="card-bg rounded-xl p-6 flex flex-col items-center text-center">
             <div class="w-16 h-16 bg-[#252525] rounded-full flex items-center justify-center mb-4 text-3xl">🛡️</div>
@@ -39,6 +41,34 @@
                 ✔️ الحماية مفعلة تلقائياً
             </div>
         </div>
-    </form>
+
+        <div class="card-bg rounded-xl p-6 md:col-span-2">
+            <h3 class="text-xl font-bold mb-4">⚙️ الأوامر المخصصة (الرد التلقائي)</h3>
+            
+            <form method="POST" action="/dashboard" class="flex gap-4 mb-6">
+                <input type="hidden" name="action" value="add_command">
+                <input type="text" name="command" placeholder="الكلمة (مثال: !قوانين)" class="w-1/3" required>
+                <input type="text" name="response" placeholder="الرد الخاص بالبوت" class="w-2/3" required>
+                <button type="submit" class="accent-bg hover:bg-[#e05200] text-white px-8 rounded font-bold mt-1">إضافة</button>
+            </form>
+            
+            <div class="bg-[#2a2a2a] rounded-lg p-4">
+                <p class="text-gray-400 mb-2">الأوامر الحالية المضافة في السيرفر:</p>
+                {% for cmd in commands %}
+                <div class="flex justify-between items-center border-b border-[#444] py-3">
+                    <div><span class="accent-text font-bold text-lg">{{ cmd[0] }}</span> <span class="text-gray-500 mx-2">➔</span> {{ cmd[1] }}</div>
+                    <form method="POST" action="/dashboard">
+                        <input type="hidden" name="action" value="delete_command">
+                        <input type="hidden" name="command" value="{{ cmd[0] }}">
+                        <button type="submit" class="text-red-500 hover:text-red-400 font-bold bg-red-500/10 px-3 py-1 rounded">حذف</button>
+                    </form>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500 py-2">لا توجد أوامر مخصصة حالياً.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
 </body>
 </html>
