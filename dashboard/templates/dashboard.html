@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة تحكم السيرفر | Blaze</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0d0d0d; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card-bg { background-color: #1a1a1a; border: 1px solid #2a2a2a; transition: 0.3s; }
+        .accent-text { color: #ff5e00; }
+        .accent-bg { background-color: #ff5e00; }
+        input[type="text"] { background-color: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; padding: 8px; width: 100%; margin-top: 5px;}
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto bg-gradient-to-r from-[#1a1a1a] to-[#2a1100] rounded-2xl p-8 mb-8 flex justify-between items-center shadow-lg">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">إدارة سيرفرك مع <span class="accent-text">Blaze AI</span></h1>
+            <p class="text-gray-400">لوحة تحكم متصلة بالبوت مباشرة.</p>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- ═══ الترحيب + بطاقة الصورة ═══ -->
+        <form method="POST" action="/dashboard" class="card-bg rounded-xl p-6 flex flex-col items-center text-center">
+            <input type="hidden" name="action" value="save_welcome">
+            <div class="w-16 h-16 bg-[#252525] rounded-full flex items-center justify-center mb-4 text-3xl">👋</div>
+            <h3 class="text-xl font-bold mb-2">الترحيب بالأعضاء</h3>
+
+            <p class="text-sm text-gray-400 mb-2 w-full text-right">الرسالة النصية:</p>
+            <input type="text" name="welcome_msg" value="{{ current_msg }}" required>
+
+            <div class="w-full flex items-center justify-between mt-5 bg-[#2a2a2a] p-3 rounded-lg">
+                <span class="text-sm font-bold">🖼️ بطاقة صورة الترحيب</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="image_enabled" value="1"
+                           {% if image_enabled %}checked{% endif %} class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-600 peer-checked:bg-[#ff5e00] rounded-full
+                                peer-checked:after:translate-x-5 after:content-[''] after:absolute
+                                after:top-0.5 after:left-0.5 after:bg-white after:rounded-full
+                                after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+            </div>
+
+            <p class="text-sm text-gray-400 mb-2 mt-4 w-full text-right">عنوان البطاقة:</p>
+            <input type="text" name="image_title" value="{{ image_title or 'أهلاً بك' }}"
+                   placeholder="مثال: أهلاً بك في القبيلة">
+
+            <p class="text-sm text-gray-400 mb-2 mt-4 w-full text-right">القالب:</p>
+            <div class="grid grid-cols-3 gap-2 w-full">
+                {% for tmpl, label in [('carbon','كربون'),('glow','توهج'),('minimal','بسيط')] %}
+                <label class="cursor-pointer">
+                    <input type="radio" name="image_template" value="{{ tmpl }}"
+                           {% if image_template == tmpl %}checked{% endif %} class="sr-only peer">
+                    <div class="border-2 border-[#444] peer-checked:border-[#ff5e00]
+                                peer-checked:text-[#ff5e00] rounded-lg py-3 text-sm font-bold
+                                transition">{{ label }}</div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="mt-5 w-full accent-bg hover:bg-[#e05200] text-white py-2 rounded font-bold">
+                💾 حفظ إعدادات الترحيب
+            </button>
+        </form>
+
+        <!-- ═══ الحماية ═══ -->
+        <div class="card-bg rounded-xl p-6 flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-[#252525] rounded-full flex items-center justify-center mb-4 text-3xl">🛡️</div>
+            <h3 class="text-xl font-bold mb-2">الحماية التلقائية</h3>
+            <p class="text-sm text-gray-400 mb-6 flex-grow">يعمل البوت كحارس شخصي لمنع الروابط.</p>
+            <div class="w-full bg-green-600/20 text-green-500 py-2 rounded flex items-center justify-center border border-green-600/50">
+                ✔️ الحماية مفعلة تلقائياً
+            </div>
+        </div>
+
+        <!-- ═══ الأوامر المخصصة ═══ -->
+        <div class="card-bg rounded-xl p-6 md:col-span-2">
+            <h3 class="text-xl font-bold mb-4">⚙️ الأوامر المخصصة (الرد التلقائي)</h3>
+
+            <form method="POST" action="/dashboard" class="flex gap-4 mb-6">
+                <input type="hidden" name="action" value="add_command">
+                <input type="text" name="command" placeholder="الكلمة (مثال: !قوانين)" class="w-1/3" required>
+                <input type="text" name="response" placeholder="الرد الخاص بالبوت" class="w-2/3" required>
+                <button type="submit" class="accent-bg hover:bg-[#e05200] text-white px-8 rounded font-bold mt-1">إضافة</button>
+            </form>
+
+            <div class="bg-[#2a2a2a] rounded-lg p-4">
+                <p class="text-gray-400 mb-2">الأوامر الحالية المضافة في السيرفر:</p>
+                {% for cmd in commands %}
+                <div class="flex justify-between items-center border-b border-[#444] py-3">
+                    <div><span class="accent-text font-bold text-lg">{{ cmd[0] }}</span> <span class="text-gray-500 mx-2">➔</span> {{ cmd[1] }}</div>
+                    <form method="POST" action="/dashboard">
+                        <input type="hidden" name="action" value="delete_command">
+                        <input type="hidden" name="command" value="{{ cmd[0] }}">
+                        <button type="submit" class="text-red-500 hover:text-red-400 font-bold bg-red-500/10 px-3 py-1 rounded">حذف</button>
+                    </form>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500 py-2">لا توجد أوامر مخصصة حالياً.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

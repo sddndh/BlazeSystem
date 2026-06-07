@@ -2,3 +2,8 @@ discord.py
 Flask
 requests
 psycopg2-binary
+asyncpg
+Pillow
+arabic-reshaper
+python-bidi
+aiohttp
